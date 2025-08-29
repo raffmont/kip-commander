@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kip Commander</title>
+    <style>
+
+        body {
+            background-color: black;
+            color: white; /* optional for visibility */
+        }
+
+        .button-change-dashboard   { background-color: #2196F3; color: white; }
+        button {
+            padding: 1em 1em;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+
+        body {
+            font-family: sans-serif;
+            max-width: 100%;
+            margin: 1em auto;
+            text-align: center;
+        }
+        button {
+            padding: 1em 1em;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        #status {
+            margin-top: 1em;
+            font-size: 1em;
+            color: green;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<script>
+    let minValue = 0;
+    let maxValue = 3;
+    let curValue = 0;
+    let dashboards = [];
+    let socket;
+    let statusTimer;
+
+    function updateStatus(message) {
+        const status = document.getElementById('status');
+        status.textContent = message;
+        if (statusTimer) clearTimeout(statusTimer);
+        statusTimer = setTimeout(() => {
+            if (status.textContent === message) {
+                status.textContent = '-';
+            }
+        }, 10000);
+    }
+
+    function connectWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const socketUrl = protocol + '//' + window.location.host + '/signalk/v1/stream?subscribe=none';
+        socket = new WebSocket(socketUrl);
+
+        socket.onopen = () => {
+            updateStatus('Connected to Signal K server');
+            socket.send(JSON.stringify({
+                context: "vessels.self",
+                subscribe: [
+                    {
+                        path: "plugins.kip.mastdisplay.*",
+                        policy: "instant"
+                    }
+                ]
+            }));
+        };
+
+        socket.onerror = (err) => updateStatus('WebSocket error: ' + err.message);
+        socket.onclose = () => {
+            updateStatus('Disconnected. Retrying in 5s...');
+            setTimeout(connectWebSocket, 5000);
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.updates) {
+                data.updates.forEach(update => {
+                    if (update.values) {
+                        update.values.forEach(value => {
+                            console.log(value.path);
+                            switch (value.path) {
+
+                                case "plugins.kip.mastdisplay.activeDashboard" :
+                                    curValue = parseInt(value.value);
+                                    console.log("Active dashboard:", curValue);
+
+                                    let activeinDashboard = document.getElementById('activeDashboard');
+                                    if (activeDashboard) activeDashboard.textContent = curValue;
+                                    break;
+
+                                case "plugins.kip.mastdisplay.maxDashboard" :
+                                    maxValue = parseInt(value.value);
+                                    console.log("Max dashboard:", maxValue);
+                                    break;
+
+                                case "plugins.kip.mastdisplay.dashboards" :
+                                    //dashboards = JSON.parse(value.value);
+                                    console.log("Dashboards");
+                                    console.log(value.value);
+                                    break;
+
+                                default:
+                                    console.log("Received value: " + value.path + " = " + JSON.stringify(value.value));
+                                    break;
+                            }
+                        });
+                    }
+                });
+            }
+        };
+    }
+
+    connectWebSocket();
+
+    function changeDashboard(delta) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            updateStatus('WebSocket not connected.');
+            return;
+        }
+
+        curValue = curValue + delta;
+        if (curValue < minValue) curValue=maxValue;
+        if (curValue > maxValue) curValue=minValue;
+
+        socket.send(JSON.stringify({
+            context: 'vessels.self',
+            put: {
+                path: 'plugins.kip.mastdisplay.activeDashboard',
+                value: curValue
+            }
+        }));
+        updateStatus(`Sent value: ${curValue}`);
+    }
+
+</script>
+
+<div style="margin-top: 1em; display: flex; justify-content: center; align-items: center; gap: 0.5em;">
+    <button class="button-change-dashboard" onclick="changeDashboard(-1)">-1</button>
+    <span id="activeDashboard" style="font-size: 1.5em; width: 6em; text-align: center;">0</span>
+    <button class="button-change-dashboard" onclick="changeDashboard(1)">+1</button>
+</div>
+
+<div id="status">Connecting...</div>
+
+</body>
+</html>
