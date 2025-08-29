@@ -4,7 +4,7 @@
 export default function (app: any) {
   const error = app.error
   const debug = app.debug
-  let putsRegistred: any = {}
+
 
   function handler(context: string, path: string, value: number, callback: any) {
       const timestamp = new Date().toISOString();
@@ -43,7 +43,6 @@ export default function (app: any) {
     },
 
     stop: function () {
-      putsRegistred = {}
     },
 
     id: 'kip-commander',
@@ -52,16 +51,6 @@ export default function (app: any) {
 
     schema: () => {
       const schema: any = {
-        type: 'object',
-        required: ['authInfo'],
-        properties: {
-          authInfo: {
-            type: 'string',
-            lines: 10,
-            title: 'Authentication Info',
-            description: 'See plugin README'
-          }
-        }
       }
 
       return schema
