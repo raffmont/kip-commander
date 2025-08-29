@@ -98,7 +98,7 @@
                                     console.log("Active dashboard:", curValue);
 
                                     let activeDashboard = document.getElementById('activeDashboard');
-                                    if (activeDashboard) activeDashboard.textContent = curValue;
+                                    if (activeDashboard) activeDashboard.textContent = dashboards[curValue].name;
                                     break;
 
                                 case "plugins.kip.mastdisplay.maxDashboard" :
@@ -107,9 +107,9 @@
                                     break;
 
                                 case "plugins.kip.mastdisplay.dashboards" :
-                                    //dashboards = JSON.parse(value.value);
+                                    dashboards = value.value;
                                     console.log("Dashboards");
-                                    console.log(value.value);
+                                    console.log(dashboards);
                                     break;
 
                                 default:
