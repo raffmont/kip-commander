@@ -1,7 +1,7 @@
 {
   "name": "kip-commander",
   "version": "1.0.0",
-  "description": "Plugin to remotely change Kip dashboards",
+  "description": "Remote control for Kip dashboards",
   "keywords": [
     "signalk-node-server-plugin",
     "signalk-webapp",
