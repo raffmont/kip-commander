@@ -67,3 +67,10 @@ Remember to activate the plugin before using the user interface available as web
 
 Repeat the npm link / npm link kip-command cycle each time the Signal K Server or any production plugin is installed or
 updated.
+
+## Screenshots
+
+![alt text](figures/kip-commander-01.png "Showing dashboard 0")
+
+![alt text](figures/kip-commander-02.png "Showing dashboard 2")
+
